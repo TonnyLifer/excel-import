@@ -4,38 +4,41 @@ namespace App\Imports;
 
 use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
+use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Row;
 
-class ProductsImport implements  WithHeadingRow, OnEachRow
+class ProductsImport implements ToModel, WithBatchInserts, WithUpserts, WithHeadingRow
 {
-    public function onRow(Row $row)
+    public function model(array $row)
     {
-        Validator::make($row->toArray(), [
-            'artikul' => ['required','string'],
-            'nomenklatura' => ['required','string'],
-            'ed_izm' => ['required','string'],
-            'kol' => ['required','string'],
-            'cena_za_st' => ['required','string'],
-        ])->validate();
-        // info(gettype($row['cena_za_st']) == 'integer');
-
         Product::updateOrCreate(
-            // поиск по полю article
-            ['article' => $row['artikul']
-        ], 
-        [
-            'name' => $row['nomenklatura'],
-            'unit' => $row['ed_izm'],
-            'quantity'=> $row['kol'],
-            'price'=> $row['cena_za_st']
-        ]);
+            [
+                'article' => $row['artikul']
+            ],
+            [
+                'name' => $row['nomenklatura'],
+                'unit' => $row['ed_izm'],
+                'quantity'=> gettype($row['kol']) == 'double' ? $row['kol'] : 0,
+                'price'=> gettype($row['cena_za_st']) == 'double' ? $row['cena_za_st'] : 0
+            ]
+        );
     }
 
-    public function headingRow(): int
+    public function batchSize(): int
     {
-        return 1;
+        return 1000;
     }
+
+    public function uniqueBy()
+    {
+        return 'article';
+    }    
 }
 

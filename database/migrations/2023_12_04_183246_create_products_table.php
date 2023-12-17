@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('article');
             $table->string('name');
             $table->string('unit');
-            $table->string('quantity')->comment('Должно быть float но не смог валидировать');
-            $table->string('price')->comment('Должно быть float но не смог валидировать');
+            $table->float('quantity', 10,2);
+            $table->float('price', 10,2);
             $table->timestamps();
             $table->softDeletes();
         });
